@@ -1,0 +1,35 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: jenkins
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      containers:
+        - name: jenkins
+          image: rioriost/jenkins:lts
+          env:
+            - name: JAVA_OPTS
+              value: -Djenkins.install.runSetupWizard=false
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: jenkins-home
+              mountPath: /var/jenkins_home
+      volumes:
+        - name: jenkins-home
+          persistentVolumeClaim:
+            claimName: azure-managed-disk
+      initContainers:
+        - name: permissionsfix
+          image: alpine:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - chown 1000:1000 /var/jenkins_home;
+          volumeMounts:
+            - name: jenkins-home
+              mountPath: /var/jenkins_home
